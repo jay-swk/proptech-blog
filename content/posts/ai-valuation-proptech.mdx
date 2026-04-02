@@ -1,0 +1,122 @@
+---
+title: "PropTech에서 AI 밸류에이션 도입기"
+description: "부동산 자동 가치 산정(AVM)에 머신러닝을 도입하면서 겪은 현실적인 문제들과 해결 과정을 공유합니다."
+date: "2026-03-15"
+category: "AI/ML"
+tags: ["PropTech", "AI", "Python", "머신러닝", "부동산"]
+published: true
+---
+
+부동산 가치 산정(Automated Valuation Model, AVM)은 PropTech의 핵심 기술 중 하나다.
+감정평가사 1명이 하루에 처리할 수 있는 물건은 5~10건이지만, AVM은 초당 수천 건을 처리한다.
+우리 팀은 2025년 초 이 시스템을 프로덕션에 올리면서 예상치 못한 문제들을 만났다.
+
+## 왜 AVM인가
+
+전통적인 감정평가는 시간과 비용이 많이 든다. 은행 대출 심사나 경매 참여 시 빠른 가치 산정이 필요한데, 기존 방식으로는 3~5일이 걸렸다.
+AVM을 도입하면 다음을 달성할 수 있다:
+
+- 응답 시간: 3일 → 실시간
+- 비용: 건당 30만원 → 1원 미만
+- 커버리지: 감정평가사가 방문 가능한 지역만 → 전국
+
+<Callout type="info">
+AVM은 감정평가를 대체하는 것이 아니라 **1차 스크리닝**으로 활용한다. 고가 물건이나 특수 목적 부동산은 여전히 전문 감정평가가 필요하다.
+</Callout>
+
+## 데이터 파이프라인 구성
+
+첫 번째 도전은 데이터 품질이었다. 공공 데이터(국토부 실거래가)는 주소 형식이 제각각이었다.
+
+```python
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+
+def normalize_address(raw: str) -> dict:
+    """
+    '서울특별시 강남구 역삼동 123-45' 형태를 표준화.
+    행정동/법정동 혼용 문제를 처리한다.
+    """
+    parts = raw.strip().split()
+    return {
+        "sido": parts[0] if len(parts) > 0 else None,
+        "sigungu": parts[1] if len(parts) > 1 else None,
+        "dong": parts[2] if len(parts) > 2 else None,
+        "lot": " ".join(parts[3:]) if len(parts) > 3 else None,
+    }
+
+# 실거래가 데이터 로드
+df = pd.read_csv("transactions_2024.csv", encoding="cp949")
+df["address_parsed"] = df["address"].apply(normalize_address)
+```
+
+주소 정규화 이후에도 **행정동 ↔ 법정동 불일치** 문제가 남았다. 이를 위해 행안부 주소 DB와 조인하는 별도 레이어를 만들었다.
+
+## 피처 엔지니어링
+
+AVM의 핵심은 어떤 피처를 쓰느냐다. 우리가 최종적으로 선정한 피처 그룹은 다음과 같다.
+
+| 그룹 | 피처 | 비고 |
+|------|------|------|
+| 물건 속성 | 전용면적, 층수, 건축연도 | 기본 |
+| 입지 | 지하철 거리, 학군 점수 | 좌표 기반 계산 |
+| 시장 | 최근 3개월 거래 지수 | 시계열 |
+| 매크로 | 기준금리, 전세가율 | 외부 연동 |
+
+```python
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import cross_val_score
+import numpy as np
+
+features = [
+    "area_exclusive", "floor", "building_age",
+    "dist_subway_m", "school_score",
+    "recent_trade_index", "interest_rate", "jeonse_ratio"
+]
+
+X = df[features].fillna(df[features].median())
+y = np.log1p(df["price"])  # 로그 변환으로 스케일 정규화
+
+model = GradientBoostingRegressor(
+    n_estimators=500,
+    max_depth=5,
+    learning_rate=0.05,
+    subsample=0.8,
+    random_state=42
+)
+
+cv_scores = cross_val_score(model, X, y, cv=5, scoring="neg_mean_absolute_percentage_error")
+print(f"MAPE: {-cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
+# MAPE: 0.087 ± 0.012
+```
+
+## 프로덕션에서 만난 문제
+
+### 1. 신규 아파트 콜드스타트
+
+입주 1년 미만 단지는 거래 데이터가 없어 모델 예측값이 크게 벗어났다. 해결책으로 **유사 단지 임베딩**을 도입했다: 동일 시공사, 유사 면적, 인근 신축 단지의 초기 거래가를 앵커로 삼는다.
+
+### 2. 급격한 시장 변화
+
+2024년 하반기 금리 인상 구간에서 모델이 과거 데이터에 과적합되어 현재 가격을 과대평가했다. 이후 최근 3개월 데이터에 **3배 가중치**를 부여하는 시간 가중 학습으로 전환했다.
+
+<Callout type="warning">
+모델 성능 지표(MAPE)가 좋다고 실제 비즈니스 가치와 직결되지 않는다. 오차 방향성(과대/과소)과 꼬리 분포에서의 동작이 더 중요할 수 있다.
+</Callout>
+
+### 3. 설명 가능성 요구
+
+금융 규제상 AI 의사결정에는 설명이 필요하다. SHAP 값을 API 응답에 포함시켜 "이 아파트가 인근보다 5% 높은 이유는 지하철 근접성(+8%) 때문이며, 오래된 건물 연식(-3%)이 일부 상쇄한다" 형태로 제공했다.
+
+## 결과
+
+6개월 운영 후 지표:
+- **MAPE 8.7%** (업계 평균 12~15%)
+- 처리 속도: p95 기준 **230ms**
+- 커버리지: 전국 아파트 **97.3%**
+
+<Callout type="tip">
+데이터 품질에 투자한 시간이 모델 개선보다 3배 더 효과적이었다. 좋은 데이터가 복잡한 모델보다 낫다.
+</Callout>
+
+다음 포스트에서는 이 모델을 FastAPI로 서빙하고 Redis 캐싱을 적용한 인프라 구성을 다룰 예정이다.

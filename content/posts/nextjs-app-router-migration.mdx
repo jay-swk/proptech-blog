@@ -1,0 +1,185 @@
+---
+title: "Next.js 16 App Router 마이그레이션 실전기"
+description: "Pages Router 기반 프롭테크 서비스를 App Router로 마이그레이션하면서 배운 점과 함정들을 정리했습니다."
+date: "2026-02-28"
+category: "Frontend"
+tags: ["Next.js", "React", "TypeScript", "마이그레이션", "App Router"]
+published: true
+---
+
+우리 서비스는 2022년 Next.js 12 Pages Router로 시작했다. 2026년 초, 팀에서 App Router 마이그레이션을 결정했다.
+마이그레이션에 3주가 걸렸고, 그 과정에서 공식 문서만으로는 해결하기 어려운 문제들을 만났다.
+
+## 마이그레이션 전 구조
+
+```
+pages/
+├── index.tsx          # 메인 랜딩
+├── properties/
+│   ├── index.tsx      # 매물 목록
+│   └── [id].tsx       # 매물 상세
+├── valuation.tsx      # AVM 결과 페이지
+└── _app.tsx           # 글로벌 레이아웃
+```
+
+`_app.tsx`에 전역 상태(React Query, Recoil)와 레이아웃이 뒤섞여 있었다.
+페이지마다 인증 체크 로직이 중복되어 있었고, SSR/CSR 경계가 불명확했다.
+
+## App Router 전환 전략
+
+Big Bang 방식 대신 **점진적 마이그레이션**을 선택했다. Next.js는 `pages/`와 `app/`을 동시에 운영할 수 있다.
+
+### Phase 1: 새 라우트는 app/에, 기존은 pages/ 유지
+
+```typescript
+// app/layout.tsx — 새 루트 레이아웃
+import { QueryProvider } from "@/providers/QueryProvider";
+import { AuthProvider } from "@/providers/AuthProvider";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ko">
+      <body>
+        <AuthProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </AuthProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+<Callout type="warning">
+`pages/_app.tsx`와 `app/layout.tsx`가 공존할 때, `app/` 라우트는 `layout.tsx`만 적용되고 `_app.tsx`는 무시된다. Provider를 양쪽에 모두 세팅해야 한다.
+</Callout>
+
+### Phase 2: Server Component로 데이터 페칭 이전
+
+Pages Router에서는 `getServerSideProps`를 사용했다.
+
+```typescript
+// 이전: pages/properties/[id].tsx
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const property = await fetchProperty(ctx.params!.id as string);
+  return { props: { property } };
+}
+```
+
+App Router에서는 Server Component가 직접 데이터를 fetch한다.
+
+```typescript
+// 이후: app/properties/[id]/page.tsx
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+export default async function PropertyPage({ params }: Props) {
+  const { id } = await params;
+  // Server Component에서 직접 DB 또는 API 호출
+  const property = await fetchProperty(id);
+
+  if (!property) notFound();
+
+  return <PropertyDetail property={property} />;
+}
+```
+
+데이터 페칭이 컴포넌트 트리 가장 가까운 곳으로 내려와서, 워터폴 없이 병렬 fetch가 가능해졌다.
+
+## 함정 1: "use client" 경계 설계
+
+가장 많은 시간을 쏟은 부분이다. Server Component는 이벤트 핸들러, useState, useEffect를 사용할 수 없다.
+초반에는 `"use client"`를 남발했는데, 그러면 Server Component의 장점이 사라진다.
+
+**원칙: 인터랙션이 필요한 최소 단위만 Client Component로 분리한다.**
+
+```typescript
+// 나쁜 예: 전체 페이지가 Client Component
+"use client";
+export default function PropertyList() {
+  const [filter, setFilter] = useState("all");
+  const properties = useProperties(filter); // 클라이언트에서 fetch
+  return <div>...</div>;
+}
+
+// 좋은 예: 필터 UI만 Client, 목록은 Server
+// app/properties/page.tsx (Server Component)
+export default async function PropertyListPage({ searchParams }: Props) {
+  const filter = (await searchParams).filter ?? "all";
+  const properties = await fetchProperties(filter); // 서버에서 fetch
+  return (
+    <div>
+      <FilterBar defaultFilter={filter} />  {/* Client Component */}
+      <PropertyGrid properties={properties} />  {/* Server Component */}
+    </div>
+  );
+}
+```
+
+## 함정 2: searchParams는 async
+
+Next.js 16에서 `searchParams`가 Promise로 변경되었다.
+
+```typescript
+// Next.js 15 이하
+export default function Page({ searchParams }: { searchParams: { q?: string } }) {
+  const query = searchParams.q;
+  // ...
+}
+
+// Next.js 16+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q: query } = await searchParams;
+  // ...
+}
+```
+
+마이그레이션 과정에서 이 변경을 놓쳐 런타임 에러가 발생했다. TypeScript가 잡아주지 못하는 케이스였다.
+
+## 함정 3: React Query와 Server Component 혼용
+
+Server Component에서 fetch한 데이터를 Client Component의 React Query 캐시에 주입하려면 `initialData` 패턴을 써야 한다.
+
+```typescript
+// app/properties/[id]/page.tsx (Server)
+export default async function PropertyPage({ params }: Props) {
+  const { id } = await params;
+  const initialData = await fetchProperty(id);  // 서버 사이드 프리페치
+
+  return <PropertyDetailClient id={id} initialData={initialData} />;
+}
+
+// components/PropertyDetailClient.tsx (Client)
+"use client";
+export function PropertyDetailClient({ id, initialData }: Props) {
+  const { data } = useQuery({
+    queryKey: ["property", id],
+    queryFn: () => fetchProperty(id),
+    initialData,  // 서버 데이터로 초기화, 이후 클라이언트에서 revalidate
+  });
+  // ...
+}
+```
+
+## 결과
+
+마이그레이션 완료 후 3개월 데이터:
+
+| 지표 | 이전 | 이후 | 변화 |
+|------|------|------|------|
+| LCP | 2.8s | 1.4s | -50% |
+| JS 번들 크기 | 312KB | 198KB | -37% |
+| TTFB | 420ms | 180ms | -57% |
+| 초기 페이지 로드 | 3.2s | 1.6s | -50% |
+
+<Callout type="tip">
+마이그레이션은 기능 단위로 끊어서 PR을 작게 유지하는 게 리뷰 품질과 롤백 용이성 모두에 유리하다.
+Pages Router와 App Router 혼용 기간에 라우팅 충돌이 없는지 E2E 테스트를 반드시 추가하라.
+</Callout>
+
+App Router는 처음엔 학습 곡선이 있지만, 데이터 페칭 모델이 단순해지고 성능이 확실히 좋아졌다.
+특히 부동산 상세 페이지처럼 SEO가 중요하고 초기 렌더링 속도가 핵심인 서비스에서 체감이 크다.
