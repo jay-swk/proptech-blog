@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { SearchButton } from "@/components/search/SearchButton";
+import type { PostMeta } from "@/lib/posts";
 
 const NAV_LINKS = [
   { href: "/blog", label: "블로그" },
   { href: "/tags", label: "태그" },
 ];
 
-export function Header() {
+interface HeaderProps {
+  posts?: PostMeta[];
+}
+
+export function Header({ posts = [] }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 dark:border-zinc-800 bg-[var(--background)]/80 backdrop-blur-md">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
@@ -26,7 +32,8 @@ export function Header() {
               {label}
             </Link>
           ))}
-          <div className="ml-1">
+          <div className="ml-1 flex items-center gap-0.5">
+            <SearchButton posts={posts} />
             <ThemeToggle />
           </div>
         </nav>

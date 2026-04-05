@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { getAllPosts } from "@/lib/posts";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const posts = getAllPosts();
+
   return (
     <html
       lang="ko"
@@ -33,7 +36,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen flex flex-col antialiased bg-[var(--background)] text-[var(--foreground)]">
         <ThemeProvider>
-          <Header />
+          <Header posts={posts} />
           <main className="flex-1">{children}</main>
           <Footer />
         </ThemeProvider>
