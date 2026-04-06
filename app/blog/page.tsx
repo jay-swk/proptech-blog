@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getAllPosts, getAllTags } from "@/lib/posts";
 import { BlogContent } from "@/components/blog/BlogContent";
 import type { Metadata } from "next";
@@ -20,7 +21,9 @@ export default function BlogPage() {
         </p>
       </div>
 
-      <BlogContent posts={posts} tags={tags} />
+      <Suspense>
+        <BlogContent posts={posts} tags={tags} />
+      </Suspense>
     </div>
   );
 }
