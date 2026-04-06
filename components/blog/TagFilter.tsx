@@ -23,6 +23,7 @@ export function TagFilter({
           <button
             key={tag}
             onClick={() => onToggleTag(tag)}
+            aria-pressed={isSelected}
             className={`inline-flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium transition-colors ${
               isSelected
                 ? "bg-indigo-600 text-white dark:bg-indigo-500 dark:text-white"
@@ -34,7 +35,7 @@ export function TagFilter({
               className={`text-xs ${
                 isSelected
                   ? "text-indigo-200 dark:text-indigo-200"
-                  : "text-zinc-400 dark:text-zinc-600"
+                  : "text-zinc-400 dark:text-zinc-400"
               }`}
             >
               {count}

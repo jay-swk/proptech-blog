@@ -27,7 +27,7 @@ export function BlogContent({ posts, tags }: BlogContentProps) {
     selectedTags.length === 0
       ? posts
       : posts.filter((post) =>
-          post.frontmatter.tags?.some((tag) => selectedTags.includes(tag))
+          (post.frontmatter.tags ?? []).some((tag) => selectedTags.includes(tag))
         );
 
   const isFiltering = selectedTags.length > 0;
