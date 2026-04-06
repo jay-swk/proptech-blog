@@ -1,6 +1,5 @@
 import { getAllPosts, getAllTags } from "@/lib/posts";
-import { PostGrid } from "@/components/blog/PostGrid";
-import { Tag } from "@/components/ui/Tag";
+import { BlogContent } from "@/components/blog/BlogContent";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,18 +20,7 @@ export default function BlogPage() {
         </p>
       </div>
 
-      {tags.length > 0 && (
-        <div className="mb-8 flex flex-wrap gap-2">
-          {tags.map(({ tag, count }) => (
-            <span key={tag} className="inline-flex items-center gap-1">
-              <Tag name={tag} size="md" />
-              <span className="text-xs text-zinc-400 dark:text-zinc-600">{count}</span>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <PostGrid posts={posts} />
+      <BlogContent posts={posts} tags={tags} />
     </div>
   );
 }
