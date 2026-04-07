@@ -1,0 +1,116 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "keunsik.dev" [ref=e4] [cursor=pointer]:
+        - /url: /proptech-blog
+      - navigation [ref=e5]:
+        - link "블로그" [ref=e6] [cursor=pointer]:
+          - /url: /proptech-blog/blog
+        - link "태그" [ref=e7] [cursor=pointer]:
+          - /url: /proptech-blog/tags
+        - generic [ref=e8]:
+          - button "검색" [ref=e9]:
+            - img [ref=e10]
+          - button "테마 전환" [active] [ref=e13]:
+            - img [ref=e14]
+  - main [ref=e17]:
+    - generic [ref=e20]:
+      - generic [ref=e21]: PropTech Developer
+      - heading "안녕하세요, Keunsik입니다" [level=1] [ref=e23]:
+        - text: 안녕하세요,
+        - text: Keunsik입니다
+      - paragraph [ref=e24]:
+        - text: 프롭테크 개발자로 부동산 × 기술의 교차점을 탐구합니다.
+        - text: AI 밸류에이션, 데이터 파이프라인, 모던 웹 개발에 대해 씁니다.
+      - generic [ref=e25]:
+        - link "블로그 보기" [ref=e26] [cursor=pointer]:
+          - /url: /proptech-blog/blog
+          - text: 블로그 보기
+          - img [ref=e27]
+        - link "GitHub" [ref=e29] [cursor=pointer]:
+          - /url: https://github.com/givepro91
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - heading "최근 포스트" [level=2] [ref=e33]
+        - link "전체 보기" [ref=e34] [cursor=pointer]:
+          - /url: /proptech-blog/blog
+          - text: 전체 보기
+          - img [ref=e35]
+      - generic [ref=e37]:
+        - article [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: AI/ML
+            - time [ref=e41]: 2026년 3월 15일
+          - link "PropTech에서 AI 밸류에이션 도입기 부동산 자동 가치 산정(AVM)에 머신러닝을 도입하면서 겪은 현실적인 문제들과 해결 과정을 공유합니다." [ref=e42] [cursor=pointer]:
+            - /url: /proptech-blog/blog/ai-valuation-proptech
+            - heading "PropTech에서 AI 밸류에이션 도입기" [level=2] [ref=e43]
+            - paragraph [ref=e44]: 부동산 자동 가치 산정(AVM)에 머신러닝을 도입하면서 겪은 현실적인 문제들과 해결 과정을 공유합니다.
+          - generic [ref=e45]:
+            - link "#PropTech" [ref=e46] [cursor=pointer]:
+              - /url: /proptech-blog/tags/PropTech
+            - link "#AI" [ref=e47] [cursor=pointer]:
+              - /url: /proptech-blog/tags/AI
+            - link "#Python" [ref=e48] [cursor=pointer]:
+              - /url: /proptech-blog/tags/Python
+            - link "#머신러닝" [ref=e49] [cursor=pointer]:
+              - /url: /proptech-blog/tags/%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D
+        - article [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]: Frontend
+            - time [ref=e53]: 2026년 2월 28일
+          - link "Next.js 16 App Router 마이그레이션 실전기 Pages Router 기반 프롭테크 서비스를 App Router로 마이그레이션하면서 배운 점과 함정들을 정리했습니다." [ref=e54] [cursor=pointer]:
+            - /url: /proptech-blog/blog/nextjs-app-router-migration
+            - heading "Next.js 16 App Router 마이그레이션 실전기" [level=2] [ref=e55]
+            - paragraph [ref=e56]: Pages Router 기반 프롭테크 서비스를 App Router로 마이그레이션하면서 배운 점과 함정들을 정리했습니다.
+          - generic [ref=e57]:
+            - link "#Next.js" [ref=e58] [cursor=pointer]:
+              - /url: /proptech-blog/tags/Next.js
+            - link "#React" [ref=e59] [cursor=pointer]:
+              - /url: /proptech-blog/tags/React
+            - link "#TypeScript" [ref=e60] [cursor=pointer]:
+              - /url: /proptech-blog/tags/TypeScript
+            - link "#마이그레이션" [ref=e61] [cursor=pointer]:
+              - /url: /proptech-blog/tags/%EB%A7%88%EC%9D%B4%EA%B7%B8%EB%A0%88%EC%9D%B4%EC%85%98
+        - article [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: Data Engineering
+            - time [ref=e65]: 2026년 1월 20일
+          - link "부동산 데이터 파이프라인 구축하기 국토부 실거래가, 건축물 대장, 공시지가 등 분산된 부동산 공공 데이터를 통합하는 파이프라인 설계와 구현 과정을 공유합니다." [ref=e66] [cursor=pointer]:
+            - /url: /proptech-blog/blog/real-estate-data-pipeline
+            - heading "부동산 데이터 파이프라인 구축하기" [level=2] [ref=e67]
+            - paragraph [ref=e68]: 국토부 실거래가, 건축물 대장, 공시지가 등 분산된 부동산 공공 데이터를 통합하는 파이프라인 설계와 구현 과정을 공유합니다.
+          - generic [ref=e69]:
+            - link "#Python" [ref=e70] [cursor=pointer]:
+              - /url: /proptech-blog/tags/Python
+            - link "#PostgreSQL" [ref=e71] [cursor=pointer]:
+              - /url: /proptech-blog/tags/PostgreSQL
+            - link "#AWS" [ref=e72] [cursor=pointer]:
+              - /url: /proptech-blog/tags/AWS
+            - link "#데이터 파이프라인" [ref=e73] [cursor=pointer]:
+              - /url: /proptech-blog/tags/%EB%8D%B0%EC%9D%B4%ED%84%B0%20%ED%8C%8C%EC%9D%B4%ED%94%84%EB%9D%BC%EC%9D%B8
+    - generic [ref=e75]:
+      - heading "기술 스택" [level=2] [ref=e76]
+      - generic [ref=e77]:
+        - generic [ref=e78]: Next.js
+        - generic [ref=e79]: React
+        - generic [ref=e80]: TypeScript
+        - generic [ref=e81]: Tailwind CSS
+        - generic [ref=e82]: Python
+        - generic [ref=e83]: FastAPI
+        - generic [ref=e84]: PostgreSQL
+        - generic [ref=e85]: Supabase
+        - generic [ref=e86]: AWS
+        - generic [ref=e87]: NCP
+        - generic [ref=e88]: Docker
+        - generic [ref=e89]: GitHub Actions
+  - contentinfo [ref=e90]:
+    - generic [ref=e91]:
+      - paragraph [ref=e92]: © 2026 Keunsik. 부동산 × 기술의 교차점을 탐구합니다.
+      - generic [ref=e93]:
+        - link "GitHub" [ref=e94] [cursor=pointer]:
+          - /url: https://github.com/givepro91
+        - link "Contact" [ref=e95] [cursor=pointer]:
+          - /url: mailto:hello@keunsik.dev
+  - button "Open Next.js Dev Tools" [ref=e101] [cursor=pointer]:
+    - img [ref=e102]
+  - alert [ref=e105]
